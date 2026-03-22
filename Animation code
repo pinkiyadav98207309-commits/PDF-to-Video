@@ -1,0 +1,51 @@
+from moviepy.editor import *
+from gtts import gTTS
+
+def create_video(text, output_path):
+    lines = text.split("\n")
+    clips = []
+
+    for i, line in enumerate(lines):
+        if line.strip() == "":
+            continue
+
+        audio_file = f"temp_{i}.mp3"
+        tts = gTTS(text=line, lang='ne')
+        tts.save(audio_file)
+
+        audio = AudioFileClip(audio_file)
+
+        # 🎬 Main Title (center)
+        title = TextClip(
+            line,
+            fontsize=50,
+            color='white',
+            size=(1280, 720),
+            method='caption'
+        ).set_position("center").set_duration(audio.duration)
+
+        # ✨ Fade animation
+        title = title.fadein(0.5).fadeout(0.5)
+
+        # 📌 Subtitle (bottom)
+        subtitle = TextClip(
+            line,
+            fontsize=30,
+            color='yellow',
+            size=(1000, None),
+            method='caption'
+        ).set_position(("center", "bottom")).set_duration(audio.duration)
+
+        subtitle = subtitle.fadein(0.5)
+
+        # 🎥 Background (black screen)
+        bg = ColorClip(size=(1280, 720), color=(0, 0, 0), duration=audio.duration)
+
+        # 🎞 Combine all
+        video = CompositeVideoClip([bg, title, subtitle])
+        video = video.set_audio(audio)
+
+        clips.append(video)
+
+    final_video = concatenate_videoclips(clips)
+    final_video.write_videofile(output_path, fps=24)
